@@ -9,31 +9,22 @@ df = pd.read_csv("my_data.csv", index_col=False)
 df = df.drop('Unnamed: 0', axis=1)
 
 # Create a Streamlit app
-st.title('YouTube Channel Analysis')
+st.title("YouTube Analytics")
 
-# Add a sidebar for customization
-st.sidebar.header('Customization Options')
+# Sidebar to select channel name, metric, and year
+selected_channel = st.sidebar.selectbox("Select Channel Name", df['channel_name'].unique())
+selected_metric = st.sidebar.selectbox("Select Metric", ['view_count', 'like_count', 'comment_count'])
+selected_year = st.sidebar.slider("Select Year", min_value=df['year'].min(), max_value=df['year'].max())
 
-# Widget to select multiple channel names for comparison
-selected_channels = st.sidebar.multiselect('Select Channel Names', df['channel_name'].unique(), default=df['channel_name'].unique()[0])
+# Filter the DataFrame based on the selected channel, metric, and year
+filtered_df = df[(df['channel_name'] == selected_channel) & (df['year'] == selected_year)]
 
-selected_column = st.sidebar.selectbox('Select Data Column', df['view_count'])
+# Create a line chart of the selected metric over time
+fig = px.line(filtered_df, x='published', y=selected_metric, title=f'{selected_metric.capitalize()} Over Time for {selected_channel} in {selected_year}')
+fig.update_xaxes(title='Published Date')
+fig.update_yaxes(title=selected_metric.capitalize())
 
-# Filter data based on selected channel names
-filtered_data = df[df['channel_name'].isin(selected_channels)]
+# Display the chart
+st.plotly_chart(fig)
 
-# Create the histogram
-plt.figure(figsize=(10, 6))
-sns.histplot(data=filtered_data, x=selected_column, hue='channel_name', multiple="stack", discrete=True, palette='tab10')
-
-# Customize the plot
-plt.xlabel(selected_column.capitalize())
-plt.ylabel('Count')
-plt.title(f'Distribution of {selected_column.capitalize()} Among Selected Channels')
-
-# Show the legend
-plt.legend(title='Channel Name', bbox_to_anchor=(1.05, 1), loc='upper left')
-
-# Display the plot in the Streamlit app
-st.pyplot(plt)
 
